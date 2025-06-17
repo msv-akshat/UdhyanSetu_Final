@@ -101,10 +101,10 @@ function Downloads() {
         </select>
       </div>
       <div className="d-flex gap-3 mb-3">
-        <button className="btn btn-success" onClick={handleDownload} disabled={!mandal || !village || !crop}>
+        <button className="btn btn-success" onClick={handleDownload} disabled={!mandal && !village && !crop}>
           Download Excel
         </button>
-        <button className="btn btn-info" onClick={handleGetTotalArea} disabled={!mandal || !village || !crop}>
+        <button className="btn btn-info" onClick={handleGetTotalArea} disabled={!mandal && !village && !crop}>
           Get Total Area
         </button>
       </div>

@@ -38,19 +38,35 @@ export const registerFarmer = async (req, res) => {
 
 
 export const getTotalArea = async (req, res) => {
-  const mandal = req.body.mandal.trim();
-  const village = req.body.village.trim();
-  const crop = req.body.crop.trim();
+  let { mandal, village, crop } = req.body;
 
-  console.log('Filtering for:', { mandal, village, crop });
+  mandal = mandal?.trim();
+  village = village?.trim();
+  crop = crop?.trim();
 
   try {
-    const [rows] = await db.query(
-      'SELECT SUM(area) AS totalArea, COUNT(*) AS countFarmers FROM farmers WHERE mandal = ? AND village = ? AND crop = ?',
-      [mandal, village, crop]
-    );
+    let query = 'SELECT SUM(area) AS totalArea, COUNT(*) AS countFarmers FROM farmers';
+    let conditions = [];
+    let values = [];
 
-    console.log('Query result:', rows);
+    if (mandal) {
+      conditions.push('mandal = ?');
+      values.push(mandal);
+    }
+    if (village) {
+      conditions.push('village = ?');
+      values.push(village);
+    }
+    if (crop) {
+      conditions.push('crop = ?');
+      values.push(crop);
+    }
+
+    if (conditions.length > 0) {
+      query += ' WHERE ' + conditions.join(' AND ');
+    }
+
+    const [rows] = await db.query(query, values);
     res.json({ totalArea: rows[0].totalArea || 0, countFarmers: rows[0].countFarmers || 0 });
   } catch (error) {
     console.error('Error in getTotalArea:', error);
@@ -59,29 +75,48 @@ export const getTotalArea = async (req, res) => {
 };
 
 export const downloadFarmerData = async (req, res) => {
-  const { mandal, village, crop } = req.body;
+  let { mandal, village, crop } = req.body;
+
+  mandal = mandal?.trim();
+  village = village?.trim();
+  crop = crop?.trim();
 
   try {
-    const [rows] = await db.query(
-      'SELECT name, phno, mandal, village, crop, area FROM farmers WHERE mandal = ? AND village = ? AND crop = ?',
-      [mandal.trim(), village.trim(), crop.trim()]
-    );
+    let query = 'SELECT name, phno, mandal, village, crop, area FROM farmers';
+    let conditions = [];
+    let values = [];
 
+    if (mandal) {
+      conditions.push('mandal = ?');
+      values.push(mandal);
+    }
+    if (village) {
+      conditions.push('village = ?');
+      values.push(village);
+    }
+    if (crop) {
+      conditions.push('crop = ?');
+      values.push(crop);
+    }
+
+    if (conditions.length > 0) {
+      query += ' WHERE ' + conditions.join(' AND ');
+    }
+
+    const [rows] = await db.query(query, values);
     const totalArea = rows.reduce((sum, row) => sum + parseFloat(row.area || 0), 0);
     const countFarmers = rows.length;
 
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Farmer Data');
 
-    // Title + summary rows
-    worksheet.addRow([`Farmer Report for: ${mandal} - ${village} (${crop})`]).font = { bold: true, size: 14 };
-    worksheet.addRow([]); // Spacer
+    const titleText = `Farmer Report${mandal ? `: ${mandal}` : ''}${village ? ` > ${village}` : ''}${crop ? ` (${crop})` : ''}`;
+    worksheet.addRow([titleText]).font = { bold: true, size: 14 };
+    worksheet.addRow([]);
 
-    // Header row
     const header = ['S.no', 'Name', 'Phone Number', 'Mandal', 'Village', 'Crop', 'Area (hectares)'];
     worksheet.addRow(header);
 
-    // Add farmer rows
     rows.forEach((row, index) => {
       worksheet.addRow([
         index + 1,
@@ -95,29 +130,17 @@ export const downloadFarmerData = async (req, res) => {
     });
 
     worksheet.addRow([]);
+    worksheet.addRow(['', '', '', '', '', 'Total Farmers:', countFarmers]);
+    worksheet.addRow(['', '', '', '', '', 'Total Area:', `${totalArea} hectares`]);
 
-    worksheet.addRow([
-      '', // Leave S.No blank
-      '', // Name blank
-      '', // Phone blank
-      '', // Mandal blank
-      '', // Village blank
-      'Total Farmers:', countFarmers
-    ]);
-
-    worksheet.addRow([
-      '', '', '', '', '',
-      'Total Area:', `${totalArea} hectares`
-    ]);
-
-    // Styling header row
-    const headerRow = worksheet.getRow(4);
+    // Style
+    const headerRow = worksheet.getRow(3);
     headerRow.eachCell(cell => {
       cell.font = { bold: true };
       cell.fill = {
         type: 'pattern',
         pattern: 'solid',
-        fgColor: { argb: 'FFCCE5FF' }, // light blue
+        fgColor: { argb: 'FFCCE5FF' },
       };
       cell.border = {
         top: { style: 'thin' },
@@ -128,7 +151,6 @@ export const downloadFarmerData = async (req, res) => {
       cell.alignment = { vertical: 'middle', horizontal: 'center' };
     });
 
-    // Add borders to all data cells
     worksheet.eachRow((row, rowNumber) => {
       if (rowNumber >= 4) {
         row.eachCell(cell => {
@@ -142,23 +164,24 @@ export const downloadFarmerData = async (req, res) => {
       }
     });
 
-    // Auto width
-    worksheet.columns.forEach(column => {
-      let maxLength = 10;
-      column.eachCell({ includeEmpty: true }, cell => {
-        maxLength = Math.max(maxLength, (cell.value || '').toString().length);
-      });
-      column.width = maxLength + 2;
+    // Column widths (shorter S.no)
+    worksheet.columns.forEach((column, index) => {
+      if (index === 0) column.width = 6;
+      else {
+        let maxLength = 10;
+        column.eachCell({ includeEmpty: true }, cell => {
+          maxLength = Math.max(maxLength, (cell.value || '').toString().length);
+        });
+        column.width = maxLength + 2;
+      }
     });
 
-    // Timestamp for filename
     const now = new Date();
-    const timestamp = now.toISOString().replace(/T/, '_').replace(/:/g, '-').split('.')[0]; // e.g., 2025-06-16_17-32-01
-    const filename = `Farmers_${mandal}_${village}_${crop}_${timestamp}.xlsx`;
+    const timestamp = now.toISOString().replace(/T/, '_').replace(/:/g, '-').split('.')[0];
+    const filename = `Farmers_${timestamp}.xlsx`;
 
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-
     await workbook.xlsx.write(res);
     res.end();
   } catch (error) {
