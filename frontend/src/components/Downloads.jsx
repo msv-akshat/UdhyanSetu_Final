@@ -10,13 +10,15 @@ function Downloads() {
   const [totalArea, setTotalArea] = useState(null);
   const [countFarmers, setCountFarmers] = useState(null);
 
+  const API_URL = process.env.REACT_APP_API_BASE_URL;
+
   const mandals = Object.keys(mandalVillageMap);
   const villages = mandal ? mandalVillageMap[mandal] : [];
 
   const handleDownload = async () => {
     try {
       const response = await axios.post(
-        'http://localhost:8000/download',
+        `${API_URL}/download`,
         { mandal, village, crop },
         { responseType: 'blob' }
       );
@@ -45,7 +47,7 @@ function Downloads() {
 
   const handleGetTotalArea = async () => {
     try {
-      const response = await axios.post('http://localhost:8000/totalarea', {
+      const response = await axios.post(`${API_URL}/totalarea`, {
         mandal, village, crop
       });
       const fetchedArea = response.data.totalArea || 0;

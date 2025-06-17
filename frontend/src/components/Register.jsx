@@ -17,6 +17,7 @@ function Register(props) {
     area: '',
   });
   const [hover, setHover] = useState(false);
+  const API_URL = process.env.REACT_APP_API_BASE_URL;
 
   const villagesFromMandal = formData.mandal ? mandalVillageMap[formData.mandal] || [] : [];
 
@@ -36,7 +37,7 @@ function Register(props) {
     try {
       const cleanArea = parseFloat(formData.area).toFixed(2);
 
-      const res = await axios.post('http://localhost:8000/register', {
+      const res = await axios.post(`${API_URL}/register`, {
         name: formData.name,
         phno: formData.phno,
         mandal: formData.mandal,

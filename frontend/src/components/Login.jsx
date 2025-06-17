@@ -18,6 +18,8 @@ function Login(props) {
   const [hover, setHover] = useState(false);
   const navigate = useNavigate();
 
+  const API_URL = process.env.REACT_APP_API_BASE_URL;
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -27,7 +29,7 @@ function Login(props) {
     }
 
     try {
-      const response = await axios.post('http://localhost:8000/login', {
+      const response = await axios.post(`${API_URL}/login`, {
         username,
         password,
       });
