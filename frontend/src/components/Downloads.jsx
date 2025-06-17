@@ -93,7 +93,7 @@ function Downloads() {
 
       <div className="form-group mb-3">
         <label>Crop</label>
-        <select className="form-control" value={crop} onChange={e => setCrop(e.target.value)} disabled={!village}>
+        <select className="form-control" value={crop} onChange={e => setCrop(e.target.value)}>
           <option value="">-- Select Crop --</option>
           {cropList.map(c => (
             <option key={c} value={c}>{c}</option>

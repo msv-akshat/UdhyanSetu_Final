@@ -104,7 +104,9 @@ export const downloadFarmerData = async (req, res) => {
     }
 
     const [rows] = await db.query(query, values);
-    const totalArea = rows.reduce((sum, row) => sum + parseFloat(row.area || 0), 0);
+    const totalArea = parseFloat(
+      rows.reduce((sum, row) => sum + parseFloat(row.area || 0), 0).toFixed(2)
+    );
     const countFarmers = rows.length;
 
     const workbook = new ExcelJS.Workbook();
