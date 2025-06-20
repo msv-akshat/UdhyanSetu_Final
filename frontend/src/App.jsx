@@ -10,7 +10,7 @@ import About from './components/About';
 import Downloads from './components/Downloads';
 import { AuthContext } from './contexts/AuthContext';
 import Analytics from './components/Analytics';
-import Uploads from './components/Uploads';
+import UploadFarmerExcel from './components/UploadFarmerExcel';
 
 function AppContent() {
   const { isLoggedIn } = useContext(AuthContext);
@@ -30,7 +30,7 @@ function AppContent() {
         <Route path="/register" element={<Register title="Register Farmer" />} />
         <Route path='/download' element={<Downloads title="Download Data" />} />
         <Route path='/analytics' element={<Analytics title="Analytics" />} />
-        <Route path='/uploads' element={<Uploads title="Upload Data" />} />
+        <Route path='/upload-farmers' element={<UploadFarmerExcel title="Upload Excel" />} />
       </Routes>
     </>
   );

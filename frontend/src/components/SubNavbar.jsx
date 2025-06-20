@@ -52,13 +52,13 @@ function SubNavbar() {
         {role === 'employee' && (
           <li className="nav-item">
             <Link
-              to="/uploads"
+              to="/upload-farmers"
               className="nav-link"
               style={subnavStyle.link}
               onMouseOver={(e) => (e.target.style.backgroundColor = subnavStyle.hover.backgroundColor)}
               onMouseOut={(e) => (e.target.style.backgroundColor = 'transparent')}
             >
-              ⬆️ Uploads
+              ⬆️ Upload Excel
             </Link>
 
           </li>

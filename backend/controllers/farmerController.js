@@ -19,23 +19,26 @@ export const registerFarmer = async (req, res) => {
   }
 
   try {
-    // Check for duplicate phone number
+    // Check for duplicate in main table
     const [existing] = await db.query('SELECT * FROM farmers WHERE phno = ?', [phno]);
     if (existing.length > 0) {
       return res.status(400).json({ success: false, error: 'Phone number already exists' });
     }
 
-    // Insert farmer
-    const query = 'INSERT INTO farmers (name, phno, mandal, village, crop, area) VALUES (?, ?, ?, ?, ?, ?)';
-    await db.query(query, [name, phno, mandal, village, crop, parsedArea.toFixed(2)]);
+    // Insert into farmer_uploads with source = 'self' and uploaded_by = null
+    const query = `
+      INSERT INTO farmer_uploads 
+        (name, phno, mandal, village, crop, area, source, uploaded_by, is_approved, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, false, NOW(), NOW())
+    `;
+    await db.query(query, [name, phno, mandal, village, crop, parsedArea.toFixed(2), 'self', null]);
 
-    return res.status(201).json({ success: true, message: 'Farmer registered successfully' });
+    return res.status(201).json({ success: true, message: 'Farmer registered successfully. Awaiting approval.' });
   } catch (err) {
     console.error('Error registering farmer:', err);
     return res.status(500).json({ success: false, error: 'Internal server error' });
   }
 };
-
 
 export const getTotalArea = async (req, res) => {
   let { mandal, village, crop } = req.body;
