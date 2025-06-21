@@ -11,6 +11,8 @@ import Downloads from './components/Downloads';
 import { AuthContext } from './contexts/AuthContext';
 import Analytics from './components/Analytics';
 import UploadFarmerExcel from './components/UploadFarmerExcel';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function AppContent() {
   const { isLoggedIn } = useContext(AuthContext);
@@ -32,6 +34,7 @@ function AppContent() {
         <Route path='/analytics' element={<Analytics title="Analytics" />} />
         <Route path='/upload-farmers' element={<UploadFarmerExcel title="Upload Excel" />} />
       </Routes>
+      <ToastContainer position="top-right" autoClose={5000} />
     </>
   );
 }

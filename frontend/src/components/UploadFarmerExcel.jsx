@@ -31,6 +31,9 @@ function UploadFarmerExcel() {
 
       toast.success(res.data.message);
       setFile(null);
+      toast.info(`Total Farmers in Excel: ${res.data.totalFarmers}`);
+      toast.info(`Farmers Successfully Uploaded: ${res.data.uploadedCount}`);
+      toast.info(`Farmers Skipped: ${res.data.skippedCount}`);
     } catch (err) {
       console.error(err);
       toast.error(err.response?.data?.error || 'Upload failed');

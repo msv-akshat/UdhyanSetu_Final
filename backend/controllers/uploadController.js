@@ -59,6 +59,9 @@ export const uploadFarmerExcel = async (req, res) => {
         console.log("✅ Found header row at index", headerRowIndex, ":", headerRow);
 
         const farmers = [];
+        let uploadedCount = 0;
+        let skippedCount = 0;
+        let totalFarmers = 0;
 
         for (let i = headerRowIndex + 1; i <= worksheet.rowCount; i++) {
             const now = new Date();
@@ -67,6 +70,7 @@ export const uploadFarmerExcel = async (req, res) => {
 
             // Skip rows like "Total Farmers", etc.
             if (values.some(val => val.toLowerCase().includes('total'))) continue;
+            totalFarmers++;
 
             const name = values[headerMap.name];
             const phno = values[headerMap.phno];
@@ -79,6 +83,7 @@ export const uploadFarmerExcel = async (req, res) => {
 
             if (!name || !phno || !mandal || !village || !crop || isNaN(area)) {
                 console.log(`❌ Skipped invalid row ${i}:`, values);
+                skippedCount++;
                 continue;
             }
 
@@ -95,6 +100,7 @@ export const uploadFarmerExcel = async (req, res) => {
                 now,
                 now,
             ]);
+            uploadedCount++;
         }
         console.log(`✅ Parsed farmers count: ${farmers.length}`);
         console.log(farmers.slice(0, 3)); // Show sample
@@ -113,13 +119,19 @@ export const uploadFarmerExcel = async (req, res) => {
 
         await db.query(insertQuery, [farmers]);
 
-        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        if (fs.existsSync(filePath)) await fs.promises.unlink(filePath);
 
-        return res.status(200).json({ success: true, message: `${farmers.length} valid farmers uploaded.` });
+        return res.status(200).json({
+            success: true,
+            message: `${uploadedCount} farmers uploaded successfully.`,
+            uploadedCount: uploadedCount,
+            skippedCount: skippedCount-1,
+            totalFarmers: totalFarmers-1,
+        });
 
     } catch (err) {
         console.error('❌ Excel Upload Error:', err);
-        if (filePath && fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        if (filePath && fs.existsSync(filePath)) await fs.promises.unlink(filePath);
         return res.status(500).json({ success: false, error: 'Server error while processing Excel file.' });
     }
 };
