@@ -6,7 +6,14 @@ import { loginUser } from '../controllers/authController.js';
 import { uploadFarmerExcel } from '../controllers/uploadController.js';
 
 const router = express.Router();
-const upload = multer({dest: '/uploads/'})
+
+const storage = multer.diskStorage({
+  destination: '/tmp', // ✅ Safe for Render
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}-${file.originalname}`);
+  }
+});
+const upload = multer({storage})
 
 router.get('/', (req, res) => {
   res.json('Welcome to the Backend Server');
