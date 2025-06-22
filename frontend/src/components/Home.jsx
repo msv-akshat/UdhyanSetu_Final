@@ -35,7 +35,7 @@ function Home(props) {
 							Register Farmer
 						</Link>
 						<Link to="/login" className="btn btn-outline-light btn-lg">
-							Employee Login
+							User Login
 						</Link>
 					</div>
 				</div>
