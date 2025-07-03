@@ -27,6 +27,12 @@ build/
 .env
 .env.*.local
 
+# Environment files
+backend/.env
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+
 # System files
 .DS_Store
 Thumbs.db
