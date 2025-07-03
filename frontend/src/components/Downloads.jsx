@@ -10,7 +10,7 @@ function Downloads() {
   const [totalArea, setTotalArea] = useState(null);
   const [countFarmers, setCountFarmers] = useState(null);
 
-  const API_URL = process.env.REACT_APP_API_BASE_URL;
+  const API_URL = import.meta.env.VITE_API_BASE_URL;
 
   const mandals = Object.keys(mandalVillageMap);
   const villages = mandal ? mandalVillageMap[mandal] : [];

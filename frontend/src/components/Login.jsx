@@ -18,7 +18,7 @@ function Login(props) {
   const [hover, setHover] = useState(false);
   const navigate = useNavigate();
 
-  const API_URL = process.env.REACT_APP_API_BASE_URL;
+  const API_URL = import.meta.env.VITE_API_BASE_URL;
 
   const handleSubmit = async (e) => {
     e.preventDefault();

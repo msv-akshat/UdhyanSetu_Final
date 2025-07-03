@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 function UploadFarmerExcel() {
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
-  const API_URL = process.env.REACT_APP_API_BASE_URL;
+  const API_URL = import.meta.env.VITE_API_BASE_URL;
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
