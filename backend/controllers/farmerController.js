@@ -1,37 +1,33 @@
 // controllers/farmerController.js
 import { db } from '../config/db.js';
-import ExcelJS from 'exceljs'
+import ExcelJS from 'exceljs';
 
 export const registerFarmer = async (req, res) => {
-  let { name, phno, mandal, village, crop, area } = req.body;
+  let { name, phone, mandal, village, crop, area } = req.body;
 
-  // Trim input
   name = name?.trim();
-  phno = phno?.trim();
+  phone = phone?.trim();
   mandal = mandal?.trim();
   village = village?.trim();
   crop = crop?.trim();
 
-  // Convert and validate area
   const parsedArea = parseFloat(area);
-  if (!name || !phno || !mandal || !village || !crop || isNaN(parsedArea) || parsedArea <= 0) {
+  if (!name || !phone || !mandal || !village || !crop || isNaN(parsedArea) || parsedArea <= 0) {
     return res.status(400).json({ success: false, error: 'All fields are required and area must be a valid number > 0' });
   }
 
   try {
-    // Check for duplicate in main table
-    const [existing] = await db.query('SELECT * FROM farmers WHERE phno = ?', [phno]);
+    const { rows: existing } = await db.query('SELECT * FROM farmers WHERE phone = $1', [phone]);
     if (existing.length > 0) {
       return res.status(400).json({ success: false, error: 'Phone number already exists' });
     }
 
-    // Insert into farmer_uploads with source = 'self' and uploaded_by = null
     const query = `
       INSERT INTO farmer_uploads 
-        (name, phno, mandal, village, crop, area, source, uploaded_by, is_approved, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, false, NOW(), NOW())
+        (name, phone, mandal, village, crop, area, source, uploaded_by, is_approved, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, false, NOW(), NOW())
     `;
-    await db.query(query, [name, phno, mandal, village, crop, parsedArea.toFixed(2), 'self', null]);
+    await db.query(query, [name, phone, mandal, village, crop, parsedArea.toFixed(2), 'self', null]);
 
     return res.status(201).json({ success: true, message: 'Farmer registered successfully. Awaiting approval.' });
   } catch (err) {
@@ -42,35 +38,35 @@ export const registerFarmer = async (req, res) => {
 
 export const getTotalArea = async (req, res) => {
   let { mandal, village, crop } = req.body;
-
   mandal = mandal?.trim();
   village = village?.trim();
   crop = crop?.trim();
 
   try {
-    let query = 'SELECT SUM(area) AS totalArea, COUNT(*) AS countFarmers FROM farmers';
-    let conditions = [];
-    let values = [];
+    let query = 'SELECT SUM(area) AS totalarea, COUNT(*) AS countfarmers FROM farmers';
+    const conditions = [];
+    const values = [];
 
     if (mandal) {
-      conditions.push('mandal = ?');
       values.push(mandal);
+      conditions.push(`mandal = $${values.length}`);
     }
     if (village) {
-      conditions.push('village = ?');
       values.push(village);
+      conditions.push(`village = $${values.length}`);
     }
     if (crop) {
-      conditions.push('crop = ?');
       values.push(crop);
+      conditions.push(`crop = $${values.length}`);
     }
 
     if (conditions.length > 0) {
       query += ' WHERE ' + conditions.join(' AND ');
     }
 
-    const [rows] = await db.query(query, values);
-    res.json({ totalArea: rows[0].totalArea || 0, countFarmers: rows[0].countFarmers || 0 });
+    const result = await db.query(query, values);
+    const { totalarea, countfarmers } = result.rows[0];
+    res.json({ totalArea: totalarea || 0, countFarmers: countfarmers || 0 });
   } catch (error) {
     console.error('Error in getTotalArea:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -79,43 +75,41 @@ export const getTotalArea = async (req, res) => {
 
 export const downloadFarmerData = async (req, res) => {
   let { mandal, village, crop } = req.body;
-
   mandal = mandal?.trim();
   village = village?.trim();
   crop = crop?.trim();
 
   try {
-    let query = 'SELECT name, phno, mandal, village, crop, area FROM farmers';
-    let conditions = [];
-    let values = [];
+    let query = 'SELECT name, phone, mandal, village, crop, area FROM farmers';
+    const conditions = [];
+    const values = [];
 
     if (mandal) {
-      conditions.push('mandal = ?');
       values.push(mandal);
+      conditions.push(`mandal = $${values.length}`);
     }
     if (village) {
-      conditions.push('village = ?');
       values.push(village);
+      conditions.push(`village = $${values.length}`);
     }
     if (crop) {
-      conditions.push('crop = ?');
       values.push(crop);
+      conditions.push(`crop = $${values.length}`);
     }
 
     if (conditions.length > 0) {
       query += ' WHERE ' + conditions.join(' AND ');
     }
 
-    const [rows] = await db.query(query, values);
-    const totalArea = parseFloat(
-      rows.reduce((sum, row) => sum + parseFloat(row.area || 0), 0).toFixed(2)
-    );
+    const result = await db.query(query, values);
+    const rows = result.rows;
+    const totalArea = parseFloat(rows.reduce((sum, row) => sum + parseFloat(row.area || 0), 0).toFixed(2));
     const countFarmers = rows.length;
 
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Farmer Data');
-
     const titleText = `Farmer Report${mandal ? `: ${mandal}` : ''}${village ? ` > ${village}` : ''}${crop ? ` (${crop})` : ''}`;
+
     worksheet.addRow([titleText]).font = { bold: true, size: 14 };
     worksheet.addRow([]);
 
@@ -126,7 +120,7 @@ export const downloadFarmerData = async (req, res) => {
       worksheet.addRow([
         index + 1,
         row.name,
-        row.phno,
+        row.phone,
         row.mandal,
         row.village,
         row.crop,
@@ -138,7 +132,6 @@ export const downloadFarmerData = async (req, res) => {
     worksheet.addRow(['', '', '', '', '', 'Total Farmers:', countFarmers]);
     worksheet.addRow(['', '', '', '', '', 'Total Area:', `${totalArea} hectares`]);
 
-    // Style
     const headerRow = worksheet.getRow(3);
     headerRow.eachCell(cell => {
       cell.font = { bold: true };
@@ -169,7 +162,6 @@ export const downloadFarmerData = async (req, res) => {
       }
     });
 
-    // Column widths (shorter S.no)
     worksheet.columns.forEach((column, index) => {
       if (index === 0) column.width = 6;
       else {
