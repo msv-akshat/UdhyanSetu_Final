@@ -11,7 +11,6 @@ export const loginUser = async (req, res) => {
   }
 
   try {
-    // ✅ pg uses $1, not ?
     const result = await db.query('SELECT * FROM users WHERE username = $1', [username]);
 
     if (result.rows.length === 0) {
