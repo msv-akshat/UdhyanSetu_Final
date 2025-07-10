@@ -23,11 +23,11 @@ export const registerFarmer = async (req, res) => {
     }
 
     const query = `
-      INSERT INTO farmer_uploads 
-        (name, phone, mandal, village, crop, area, source, uploaded_by, is_approved, created_at, updated_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, false, NOW(), NOW())
+      INSERT INTO farmers_pending 
+        (name, phone, mandal, village, crop, area, source, uploaded_by, created_at, status)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), $9)
     `;
-    await db.query(query, [name, phone, mandal, village, crop, parsedArea.toFixed(2), 'self', null]);
+    await db.query(query, [name, phone, mandal, village, crop, parsedArea.toFixed(2), 'self', null, 'pending']);
 
     return res.status(201).json({ success: true, message: 'Farmer registered successfully. Awaiting approval.' });
   } catch (err) {

@@ -10,7 +10,7 @@ function Register(props) {
 
   const [formData, setFormData] = useState({
     name: '',
-    phno: '',
+    phone: '',
     mandal: '',
     village: '',
     crop: '',
@@ -39,7 +39,7 @@ function Register(props) {
 
       const res = await axios.post(`${API_URL}/register`, {
         name: formData.name,
-        phno: formData.phno,
+        phone: formData.phone,
         mandal: formData.mandal,
         village: formData.village,
         crop: formData.crop,
@@ -60,7 +60,7 @@ function Register(props) {
     // Reset form
     setFormData({
       name: '',
-      phno: '',
+      phone: '',
       village: '',
       crop: '',
       area: '',
@@ -118,14 +118,14 @@ function Register(props) {
           </div>
 
           <div className="mb-4 row">
-            <label htmlFor="phno" className="col-sm-3 col-form-label">Phone no:</label>
+            <label htmlFor="phone" className="col-sm-3 col-form-label">Phone no:</label>
             <div className="col-sm-9">
               <input
                 type="text"
                 className="form-control"
-                id="phno"
-                name="phno"
-                value={formData.phno}
+                id="phone"
+                name="phone"
+                value={formData.phone}
                 onChange={handleChange}
                 placeholder="Enter your Phone number"
                 autoComplete="off"
